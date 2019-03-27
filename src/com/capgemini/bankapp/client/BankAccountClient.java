@@ -7,12 +7,17 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
+import com.capgemini.bankapp.exception.AccountNotFoundException;
 import com.capgemini.bankapp.exception.LowBalanceException;
 import com.capgemini.bankapp.model.BankAccount;
 import com.capgemini.bankapp.service.BankAccountService;
 import com.capgemini.bankapp.service.impl.BankAccountServiceImpl;
 
 public class BankAccountClient {
+	
+	static final Logger logger = Logger.getLogger(BankAccountClient.class);
 
 
 	public static void main(String[] args) {
@@ -31,10 +36,12 @@ public class BankAccountClient {
 			while(true) {
 		
 		System.out.println("1.Add new bank account \n2.withdraw \n3.deposite\n4.check Balance");
-		System.out.println("5.display all accounts\n6.fund transfer\n7.delete an account\n8.search account\n9.exit");
+		System.out.println("5.display all accounts\n6.fund transfer\n7.delete an account\n8.search account\n9.Update Account Details\n10.exit");
 		System.out.println("Enter your choice");
 		choice = Integer.parseInt(reader.readLine());
 		
+		String newAccountType;
+		String newAccountHolderName;
 		switch(choice) {
 		
 		case 1: 
@@ -61,7 +68,10 @@ public class BankAccountClient {
 			try {
 				System.out.println("current balance is "+bankService.withdraw(accountId, amount));
 			} catch (LowBalanceException e) {
-				System.out.println(e.getMessage());
+						/* System.out.println(e.getMessage()); */
+				logger.error("WITHDRAW FAILED",e);
+			} catch (AccountNotFoundException e) {
+				logger.error(e.getMessage());
 			}
 			break;
 			
@@ -70,7 +80,11 @@ public class BankAccountClient {
 			accountId = Long.parseLong(reader.readLine());
 			System.out.println("Enter ammount you want to deposit");
 			amount = Double.parseDouble(reader.readLine());
-			System.out.println("current balance is "+bankService.deposit(accountId, amount));
+			try {
+				System.out.println("current balance is "+bankService.deposit(accountId, amount));
+			} catch (AccountNotFoundException e1) {
+				logger.error(e1.getMessage());
+			}
 			
 			break;
 			
@@ -78,7 +92,11 @@ public class BankAccountClient {
 			System.out.println("Enter your account number");
 			accountId = Long.parseLong(reader.readLine());
 			
-			System.out.println("your account balance is "+bankService.checkBalance(accountId));
+			try {
+				System.out.println("your account balance is "+bankService.checkBalance(accountId));
+			} catch (AccountNotFoundException e1) {
+				logger.error(e1.getMessage());
+			}
 			break;
 			
 		case 5:
@@ -105,9 +123,14 @@ public class BankAccountClient {
 			try {
 				bankService.fundTransfer(accountId, toAccountId, amount);
 				System.out.println("successfully transfered");
+
+				
 			} catch (LowBalanceException e) {
 				System.out.println(e.getMessage());
+			} catch (AccountNotFoundException e) {
+				logger.error(e.getMessage());
 			}
+			
 			break;
 			
 		case 7:
@@ -136,17 +159,30 @@ public class BankAccountClient {
 			}
 			break;
 			
+		case 9:
+			System.out.println("enter the account ID");
+			accountId = Long.parseLong(reader.readLine());
+			System.out.println("enter new account hoder name");
+			newAccountHolderName = reader.readLine();
+			System.out.println("enter new account type");
+			newAccountType = reader.readLine();
 			
-		case 9:	
+			bankService.updateAccountDetails(accountId, newAccountHolderName, newAccountType);
+			
+			System.out.println("successfully updated");
+			break;
+			
+		case 10:	
 			System.out.println("thanks for banking with us");
 			System.exit(0);
 		}
 		
 			}
-		} catch (NumberFormatException e) {
-			e.printStackTrace();
+		
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
+			logger.error("EXCEPTION",e);
+			
 		}
 		
 		}

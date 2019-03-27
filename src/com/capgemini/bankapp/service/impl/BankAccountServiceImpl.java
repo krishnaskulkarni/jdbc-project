@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.capgemini.bankapp.dao.BankAccountDao;
 import com.capgemini.bankapp.dao.impl.BankAccountDaoImpl;
+import com.capgemini.bankapp.exception.AccountNotFoundException;
 import com.capgemini.bankapp.exception.LowBalanceException;
 import com.capgemini.bankapp.model.BankAccount;
 import com.capgemini.bankapp.service.BankAccountService;
@@ -18,13 +19,13 @@ public class BankAccountServiceImpl implements BankAccountService {
 	}
 
 	@Override
-	public double checkBalance(long accountId) {
+	public double checkBalance(long accountId) throws AccountNotFoundException {
 
 		return bankAccountDao.getBalance(accountId);
 	}
 
 	@Override
-	public double withdraw(long accountId, double amount) throws LowBalanceException {
+	public double withdraw(long accountId, double amount) throws LowBalanceException, AccountNotFoundException {
 		double currentBalance = bankAccountDao.getBalance(accountId);
 
 		if (currentBalance > amount) {
@@ -32,12 +33,13 @@ public class BankAccountServiceImpl implements BankAccountService {
 			bankAccountDao.updateBalance(accountId, currentBalance);
 			return currentBalance;
 		} else
+			
 			throw new LowBalanceException("insufficient balance");
 
 	}
 
 	@Override
-	public double deposit(long accountId, double amount) {
+	public double deposit(long accountId, double amount) throws AccountNotFoundException {
 
 		double newBalance = bankAccountDao.getBalance(accountId) + amount;
 		bankAccountDao.updateBalance(accountId, newBalance);
@@ -63,7 +65,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 	}
 
 	@Override
-	public double fundTransfer(long fromAccountId, long toAccountId, double amount) throws LowBalanceException {
+	public double fundTransfer(long fromAccountId, long toAccountId, double amount) throws LowBalanceException, AccountNotFoundException {
 		double result = withdraw(fromAccountId, amount);
 		deposit(toAccountId, amount);
 		
@@ -73,6 +75,12 @@ public class BankAccountServiceImpl implements BankAccountService {
 	@Override
 	public BankAccount findAccountById(long accountId) throws SQLException {
 		return bankAccountDao.displaySingleAccount(accountId);
+	}
+
+	@Override
+	public boolean updateAccountDetails(long accountId, String newAccountHolderName, String newAccountType) {
+		
+		return bankAccountDao.updateAccountDetails(accountId, newAccountHolderName, newAccountType);
 	}
 
 }

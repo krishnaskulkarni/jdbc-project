@@ -8,21 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.capgemini.bankapp.dao.BankAccountDao;
+import com.capgemini.bankapp.exception.AccountNotFoundException;
 import com.capgemini.bankapp.model.BankAccount;
 import com.capgemini.bankapp.util.DbUtil;
 
 public class BankAccountDaoImpl implements BankAccountDao {
 
 	@Override
-	public double getBalance(long accountId) {
+	public double getBalance(long accountId) throws AccountNotFoundException {
 		String query = "SELECT account_balance FROM bankaccounts WHERE account_id = "+accountId;
 		
 		double balance = 0.0;
 		try (Connection connection = DbUtil.getConnection();
 				PreparedStatement statement = connection.prepareStatement(query);
 				ResultSet result = statement.executeQuery()) {
-			result.next();
-			balance = result.getDouble(1);
+			if(result.next()) {
+				balance = result.getDouble(1);
+			}
+			else
+				throw new AccountNotFoundException("invalid account number");
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -44,6 +48,7 @@ public class BankAccountDaoImpl implements BankAccountDao {
 			 */
 			int result = statement.executeUpdate();
 			System.out.println("no. of rows updated: "+result);
+			
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -136,6 +141,29 @@ public class BankAccountDaoImpl implements BankAccountDao {
 		return account;
 	}
 
+	}
+
+	@Override
+	public boolean updateAccountDetails(long accountId,String newAccountHolderName, String NewAccountType) {
+		String query = "UPDATE bankaccounts SET customer_name = ?, account_type = ? WHERE account_id ="+accountId;
+		
+		try(Connection connection = DbUtil.getConnection();
+				PreparedStatement statement = connection.prepareStatement(query)){
+			
+			statement.setString(1, newAccountHolderName);
+			statement.setString(2, NewAccountType);
+			
+			int result = statement.executeUpdate();
+			
+			if(result == 1)
+				return true;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return false;
 	}
 
 }
