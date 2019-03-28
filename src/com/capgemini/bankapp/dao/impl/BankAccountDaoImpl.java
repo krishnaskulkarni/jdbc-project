@@ -8,25 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.capgemini.bankapp.dao.BankAccountDao;
-import com.capgemini.bankapp.exception.AccountNotFoundException;
 import com.capgemini.bankapp.model.BankAccount;
 import com.capgemini.bankapp.util.DbUtil;
 
 public class BankAccountDaoImpl implements BankAccountDao {
 
 	@Override
-	public double getBalance(long accountId) throws AccountNotFoundException {
+	public double getBalance(long accountId) {
 		String query = "SELECT account_balance FROM bankaccounts WHERE account_id = "+accountId;
 		
 		double balance = 0.0;
-		try (Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query);
+		Connection connection = DbUtil.getConnection();
+		try (PreparedStatement statement = connection.prepareStatement(query);
 				ResultSet result = statement.executeQuery()) {
 			if(result.next()) {
 				balance = result.getDouble(1);
 			}
 			else
-				throw new AccountNotFoundException("invalid account number");
+				return -1;
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -37,19 +36,18 @@ public class BankAccountDaoImpl implements BankAccountDao {
 
 	@Override
 	public void updateBalance(long accountId, double newBalance) {
-		String query = "UPDATE bankaccounts SET account_balance = "+newBalance+" WHERE account_id ="+accountId;
+		String query = "UPDATE bankaccounts SET account_balance = ? WHERE account_id =?";
 		
-		try(Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query)){
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query)){
 				
-			/*
-			 * statement.setDouble(1, newBalance); if we use ? instead of concatenation.
-			 * statement.setLong(2, accountId);
-			 */
+			
+			
+			  statement.setDouble(1, newBalance);
+			  statement.setLong(2, accountId);
+			 
 			int result = statement.executeUpdate();
 			System.out.println("no. of rows updated: "+result);
-			
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -61,12 +59,12 @@ public class BankAccountDaoImpl implements BankAccountDao {
 
 		String query = "DELETE FROM bankaccounts WHERE account_id = "+accountId;
 		int result;
-		
-		try(Connection connection = DbUtil.getConnection();
-		PreparedStatement statement = connection.prepareStatement(query)){
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query)){
 			result = statement.executeUpdate();
 			if(result == 1)
-				return true;	
+				return true;
+			
 		}
 		catch(SQLException e) {
 			e.printStackTrace();
@@ -77,9 +75,8 @@ public class BankAccountDaoImpl implements BankAccountDao {
 	@Override
 	public boolean addNewBankAccount(BankAccount account) {
 		String query = "INSERT INTO bankaccounts (customer_name , account_Type, account_Balance) VALUES(?,?,?)";
-		
-		try(Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query)){
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query)){
 			statement.setString(1, account.getAccountHolderName());
 			statement.setString(2, account.getAccountType());
 			statement.setDouble(3, account.getAccountBalance());
@@ -100,9 +97,8 @@ public class BankAccountDaoImpl implements BankAccountDao {
 	public List<BankAccount> displayAllAccounts() {
 		String query = "SELECT * FROM bankaccounts";
 		List<BankAccount> accounts = new ArrayList<>();
-		
-		try(Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query);
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query);
 				ResultSet result = statement.executeQuery()){
 			
 			while(result.next()) {
@@ -126,8 +122,8 @@ public class BankAccountDaoImpl implements BankAccountDao {
 	public BankAccount displaySingleAccount(long accountId) throws SQLException {
 		String query = "SELECT * FROM bankaccounts WHERE account_id ="+accountId;
 		
-		try(Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query);
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query);
 				ResultSet result = statement.executeQuery()){
 			result.next();
 			long accountId1 = result.getLong(1);
@@ -146,9 +142,8 @@ public class BankAccountDaoImpl implements BankAccountDao {
 	@Override
 	public boolean updateAccountDetails(long accountId,String newAccountHolderName, String NewAccountType) {
 		String query = "UPDATE bankaccounts SET customer_name = ?, account_type = ? WHERE account_id ="+accountId;
-		
-		try(Connection connection = DbUtil.getConnection();
-				PreparedStatement statement = connection.prepareStatement(query)){
+		Connection connection = DbUtil.getConnection();
+		try(PreparedStatement statement = connection.prepareStatement(query)){
 			
 			statement.setString(1, newAccountHolderName);
 			statement.setString(2, NewAccountType);

@@ -20,7 +20,7 @@ public class BankAccountClient {
 	static final Logger logger = Logger.getLogger(BankAccountClient.class);
 
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws AccountNotFoundException {
 
 		String accountHolderName;
 		int choice;
